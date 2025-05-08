@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Event {
+  id           String        @id @default(uuid())
+  title        String
+  maxMembers   Int
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  isActive     Boolean       @default(true)
+  participants Participant[]
+}
+
+model Participant {
+  id        String   @id @default(uuid())
+  name      String
+  studentId String
+  createdAt DateTime @default(now())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id])
+
+  @@unique([studentId, eventId])
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  polls     Poll[]
+  votes     Vote[]
+}
+
+model Poll {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  endDate     DateTime?
+  isActive    Boolean   @default(true)
+  userId      String
+  options     Option[]
+  createdBy   User      @relation(fields: [userId], references: [id])
+  votes       Vote[]
+}
+
+model Option {
+  id        String   @id @default(uuid())
+  text      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  pollId    String
+  poll      Poll     @relation(fields: [pollId], references: [id])
+  votes     Vote[]
+}
+
+model Vote {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  userId    String
+  pollId    String
+  optionId  String
+  option    Option   @relation(fields: [optionId], references: [id])
+  poll      Poll     @relation(fields: [pollId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, pollId])
+}
